@@ -9,7 +9,7 @@ $pub_image_path="..`\assets`\images`\"
 
 $root_path="..`\"
 
-
+$local_image_path=""
 
 
 
@@ -83,6 +83,8 @@ function Choose-Post{
 			if($ans_post_choice -le $idx){
 				break
 			}
+		}elseif(($ans_post_choice -eq "0") -or ($ans_post_choice -eq "")){
+			return ""
 		}
 		Write-Host "Warnning: The answer is not in the options!!"
 	}
@@ -193,8 +195,9 @@ function Operate_Changing_Postname{
 			Write-Host "Fatal: $parent_path$origin_name not exist!!"
 			return
 		}
-	mv "$parent_path$origin_name" "$parent_path$modified_name"
-
+	if($origin_name -ne $modified_name){
+		mv "$parent_path$origin_name" "$parent_path$modified_name"
+	}
 }
 
 
@@ -296,9 +299,15 @@ function Edit-Post{
 
 		if($ans_edit_choice -eq "1"){
 			$origin_postname=Choose-Post($draft_path)
+			if($origin_postname -eq ""){
+				continue
+			}
 			Modify-Postname($origin_postname)
 		}elseif($ans_edit_choice -eq "2"){
 			$postname=Choose-Post($pub_post_path)
+			if($postname -eq ""){
+				continue
+			}
 			$takedown_ret=TakeDown-Post($postname,$draft_path)
 			if($takedown_ret -eq -1){
 				Write-Host "Fatal: Can not take down the post!!"
@@ -309,9 +318,15 @@ function Edit-Post{
 
 		}elseif($ans_edit_choice -eq "3"){
 			$postname=Choose-Post($draft_path)
+			if($postname -eq ""){
+				continue
+			}
 			& "$draft_path$postname.md"
 		}elseif($ans_edit_choice -eq "4"){
 			$postname=Choose-Post($pub_post_path)
+			if($postname -eq ""){
+				continue
+			}
 			$takedown_ret=TakeDown-Post($postname,$draft_path)
 			if($takedown_ret -eq -1){
 				Write-Host "Fatal: Can not take down the post!!"
@@ -375,8 +390,12 @@ function Get-StatusList{
 
 function TakeDown-Published{
 	$postname=Choose-Post("$pub_post_path")
+	if($postname -eq ""){
+		return
+	}
 	while($true){
 		$ans_yn_store_draft=Read-Host "Do you want to store the post as a draft?`nIf no, it will be in $garbege_path(y/n)"
+		$place="drafts directory"
 		if($ans_yn_store_draft.ToLower() -eq "y"){
 			$takedown_ret=TakeDown-Post($postname,$draft_path)
 		}elseif($ans_yn_store_draft.ToLower() -eq "n"){
@@ -384,15 +403,18 @@ function TakeDown-Published{
 				mkdir $garbege_path
 			}
 			$takedown_ret=TakeDown-Post($postname,$garbege_path)
+			$place="garbeges directory"
 		}
 		if($takedown_ret -eq 0){
-			Write-Host "Taking $postname down done!"
+			Write-Host "Taking $postname down done!`nIt is now in $place."
 			break
 		}elseif($takedown_ret -eq -1){
 			break
 		}
 	}
 }
+
+
 
 
 function Update-Copys{
@@ -445,6 +467,56 @@ function Check-Categories{
 
 
 
+function Get-FileName($target_path) {
+  [System.Reflection.Assembly]::LoadWithPartialName("System.windows.forms") | Out-Null
+  $OpenFileDialog = New-Object System.Windows.Forms.OpenFileDialog
+
+  $OpenFileDialog.initialDirectory = $target_path
+
+  $OpenFileDialog.filter = "Images(*.png;*.jpg;*.jpeg;*.bmp;*.svg;*.tiff;*.webp;*.gif)|*.png;*.jpg;*.jpeg;*.bmp;*.svg;*.tiff;*.webp;*.gif|All files(*.*)|*.*"
+  
+
+  $OpenFileDialog.ShowDialog() | Out-Null
+
+  return $OpenFileDialog.filename, $OpenFileDialog.safefilename
+}
+
+
+
+
+
+function Add-ImageMaterial{
+	$postname=Choose-Post("$draft_path")
+	if($postname -eq ""){
+		return
+	}
+	$new_img_path, $new_img_name=Get-FileName($local_image_path)
+	#Write-Host $new_img_name
+
+	$new_draft_img="$draft_image_path$postname`\$new_img_name"
+	$idx=1
+	$tmp_file=$new_draft_img
+	while($true){
+		if(Test-Path $tmp_file){
+			$tmp_file=".$($new_draft_img.split(".")[1])($idx).$($new_draft_img.split(".")[2])"
+		}else{
+			break
+		}
+		$idx+=1
+	}
+	$new_draft_img=$tmp_file
+	Write-Host "$new_draft_img Added!"
+	cp $new_img_path $new_draft_img
+
+}
+
+
+
+
+
+
+
+
 
 
 
@@ -467,10 +539,11 @@ while($true){
 	Write-Host "(6) Preview in Jekyll"
 	Write-Host "(7) Update Copys"
 	Write-Host "(8) Check Published Categories"
-	Write-Host "(9) Exit"
+	Write-Host "(9) Add Material to A Draft Image Pool"
+	Write-Host "(10) Exit"
 
 	$ans_main_menu = Read-Host "Please choose the operation you want to excute"
-	if($ans_main_menu -eq 9){
+	if($ans_main_menu -eq 10){
 		exit
 	}elseif($ans_main_menu -eq 1){
 		Get-StatusList
@@ -480,6 +553,9 @@ while($true){
 		Edit-Post
 	}elseif($ans_main_menu -eq 4){
 		$postname=Choose-Post($draft_path)
+		if($postname -eq ""){
+			continue
+		}
 		Publish-Post($postname)
 	}elseif($ans_main_menu -eq 5){
 		TakeDown-Published
@@ -489,5 +565,7 @@ while($true){
 		Update-Copys
 	}elseif($ans_main_menu -eq 8){
 		Check-Categories
+	}elseif($ans_main_menu -eq 9){
+		Add-ImageMaterial
 	}
 }
