@@ -276,7 +276,7 @@ function Publish-Post{
 
 	# Publish images
 	ls "$draft_image_path$postname" |ForEach {
-		cp "$draft_image_path$postname`\$_.Name" "$pub_image_path$postname`\$_.Name" -Force
+		cp "$draft_image_path$postname`\$($_.Name)" "$pub_image_path$postname`\$($_.Name)" -Force
 	}
 
 	Write-Host "Publish done!"
@@ -428,7 +428,7 @@ function Update-Copys{
 				mkdir "$draft_image_path$pub_postname"
 			}
 			ls "$pub_image_path$pub_postname" | ForEach{
-				cp "$pub_image_path$pub_postname`\$_.Name" "$draft_image_path$pub_postname"
+				cp "$pub_image_path$pub_postname`\$($_.Name)" "$draft_image_path$pub_postname`\$($_.Name)"
 			}
 
 		}
