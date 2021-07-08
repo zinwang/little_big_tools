@@ -234,7 +234,7 @@ function Modify-Postname{
 
 	$dash_found=0
 	$txt=""
-	cat "$draft_path$origin_postname.md" | ForEach {
+	cat "$draft_path$origin_postname.md" -Encoding utf8 | ForEach {
 		$_=$_.trim("`n`r")
 		if($_ -eq "---"){
 			$dash_found+=1
@@ -243,10 +243,10 @@ function Modify-Postname{
 			$_=$_ -replace "$origin_title", "$title"
 		}
 		$txt+=$_+"`n"
-	
+		#Write-Host $_
 	}
 	#Write-Host $txt
-	$txt > "$draft_path$origin_postname.md"
+	$txt | Out-File -Encoding utf8 "$draft_path$origin_postname.md"
 
 
     # Modify Filename 
@@ -322,7 +322,7 @@ function Edit-Post{
 			if($postname -eq ""){
 				continue
 			}
-			& "$draft_path$postname.md"
+			Start-Process -FilePath "$draft_path$postname.md"
 		}elseif($ans_edit_choice -eq "4"){
 			$postname=Choose-Post($pub_post_path)
 			if($postname -eq ""){
