@@ -89,6 +89,7 @@ function Choose-Post{
 		Write-Host "Warnning: The answer is not in the options!!"
 	}
 	#Write-Host "$($post_list[$ans_post_choice-1])"
+
 	return $($post_list[$ans_post_choice-1])
 
 }
@@ -295,7 +296,7 @@ function Edit-Post{
 		Write-Host "(4) Edit Content of A Published Post(Live Edit)"
 		Write-Host "(5) Back"
 
-		$ans_edit_choice=Read-Host "Which option do you want to operate?"
+		$ans_edit_choice=Read-Host "`nWhich option do you want to operate?"
 
 		if($ans_edit_choice -eq "1"){
 			$origin_postname=Choose-Post($draft_path)
@@ -508,7 +509,7 @@ function Add-ImageMaterial{
 		$idx+=1
 	}
 	$new_draft_img=$tmp_file
-	Write-Host "$new_draft_img Added!`nYou can use it with ![$new_draft_img](..`\..`\.$new_draft_img)"
+	Write-Host "$new_draft_img Added!`nYou can use it with ![$($new_draft_img.trimstart("."))](..`\..`\.$new_draft_img)"
 	cp $new_img_path $new_draft_img
 
 }
@@ -526,7 +527,16 @@ function Add-ImageMaterial{
 
 # Begin
 
+                                                             
+Write-Host   "   ___       __    ______          __"
+Write-Host   "  / _ \__ __/ /   /_  __/__  ___  / /"
+Write-Host   " / ___/ // / _ \   / / / _ \/ _ \/ / "
+Write-Host   "/_/   \_,_/_.__/__/_/  \___/\___/_/  "
+Write-Host   "              /___/                  "
+
 Write-Host "Tech Blog Publish tool"
+
+
 
 Update-Copys
 
@@ -545,7 +555,7 @@ while($true){
 	Write-Host "(9) Add Material to A Draft Image Pool"
 	Write-Host "(10) Exit"
 
-	$ans_main_menu = Read-Host "Please choose the operation you want to excute"
+	$ans_main_menu = Read-Host "`nPlease choose the operation you want to excute"
 	if($ans_main_menu -eq 10){
 		exit
 	}elseif($ans_main_menu -eq 1){
