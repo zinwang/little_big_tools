@@ -476,7 +476,7 @@ function Get-FileName($target_path) {
   $OpenFileDialog.filter = "Images(*.png;*.jpg;*.jpeg;*.bmp;*.svg;*.tiff;*.webp;*.gif)|*.png;*.jpg;*.jpeg;*.bmp;*.svg;*.tiff;*.webp;*.gif|All files(*.*)|*.*"
   
 
-  $OpenFileDialog.ShowDialog() | Out-Null
+  $OpenFileDialog.ShowDialog((New-Object System.Windows.Forms.Form -Property @{TopMost = $true })) | Out-Null
 
   return $OpenFileDialog.filename, $OpenFileDialog.safefilename
 }
@@ -491,6 +491,9 @@ function Add-ImageMaterial{
 		return
 	}
 	$new_img_path, $new_img_name=Get-FileName($local_image_path)
+	if($new_img_path -eq ""){
+		return
+	}
 	#Write-Host $new_img_name
 
 	$new_draft_img="$draft_image_path$postname`\$new_img_name"
@@ -505,7 +508,7 @@ function Add-ImageMaterial{
 		$idx+=1
 	}
 	$new_draft_img=$tmp_file
-	Write-Host "$new_draft_img Added!"
+	Write-Host "$new_draft_img Added!`nYou can use it with ![$new_draft_img](..`\..`\.$new_draft_img)"
 	cp $new_img_path $new_draft_img
 
 }
