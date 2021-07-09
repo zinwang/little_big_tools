@@ -2,7 +2,7 @@
 $draft_path=".`\drafts`\articles`\drafts`\"
 $copy_path=".`\drafts`\articles`\copys`\"
 $draft_image_path=".`\assets`\images`\"
-$garbege_path=".`\drafts`\articles`\garbages`\"
+$garbege_path=".`\garbages`\"
 
 $pub_post_path="..`\_posts`\"
 $pub_image_path="..`\assets`\images`\"
@@ -36,7 +36,7 @@ function Input-Time{
 			if($tmp_month -eq ""){
 				break
 			}
-			if($tmp_month -match "\b(0?[0-9]|1[012])\b"){
+			if($tmp_month -match "\b(?:0?[1-9]|1[012])\b"){
 				$month=$tmp_month
 				break
 			}
@@ -47,7 +47,7 @@ function Input-Time{
 			if($tmp_date -eq ""){
 				break
 			}
-			if($tmp_date -match "\b([0-9]|[012][0-9]|3[01])\b"){
+			if($tmp_date -match "\b(?:0?[1-9]|[12][0-9]|3[01])\b"){
 				$date=$tmp_date
 				break
 			}
@@ -164,6 +164,10 @@ function TakeDown-Post{
 	}
 
 	mv "$copy_path$postname.md" "$storage_path$postname.md"
+	if($storage_path -eq $garbege_path){
+		mv "$draft_image_path$postname" "$storage_path$postname"
+	}
+
 	try{
 		rm "$pub_post_path$postname.md"
 		rm "$pub_image_path$postname"
@@ -194,11 +198,16 @@ function Operate_Changing_Postname{
 	}
 	if(!(Test-Path "$parent_path$origin_name")){
 			Write-Host "Fatal: $parent_path$origin_name not exist!!"
-			return
-		}
+			return -1
+	}
+	if((Test-Path "$parent_path$modified_name") -and ($origin_name -ne $modified_name)){
+			Write-Host "Fatal: $parent_path$modified_name has existed!!"
+			return -1
+	}
 	if($origin_name -ne $modified_name){
 		mv "$parent_path$origin_name" "$parent_path$modified_name"
 	}
+	return 0
 }
 
 
@@ -252,9 +261,15 @@ function Modify-Postname{
     # Modify Filename 
 	$modified_postname="$year-$month-$date-$title"
 
-	Operate_Changing_Postname($draft_path,$origin_postname,$modified_postname,0)
-	Operate_Changing_Postname($draft_image_path,$origin_postname,$modified_postname,1)
-	return $modified_postname
+	$ret_flag_a=Operate_Changing_Postname($draft_path,$origin_postname,$modified_postname,0)
+	$ret_flag_b=Operate_Changing_Postname($draft_image_path,$origin_postname,$modified_postname,1)
+	if(($ret_flag_a -eq 0) -and ($ret_flag_b -eq 0)){
+			Write-Host "Modifying to $modified_postname suceeded!!`n"
+			return $modified_postname
+	}else{
+			Write-Host "Modifying to $modified_postname failed!!`n"
+			return ""
+	}
 }
 
 
@@ -279,7 +294,7 @@ function Publish-Post{
 		cp "$draft_image_path$postname`\$($_.Name)" "$pub_image_path$postname`\$($_.Name)" -Force
 	}
 
-	Write-Host "Publish done!"
+	Write-Host "Publish done!`n"
 
 }
 
@@ -303,7 +318,7 @@ function Edit-Post{
 			if($origin_postname -eq ""){
 				continue
 			}
-			Modify-Postname($origin_postname)
+			$modified_postname=Modify-Postname($origin_postname)
 		}elseif($ans_edit_choice -eq "2"){
 			$postname=Choose-Post($pub_post_path)
 			if($postname -eq ""){
@@ -315,6 +330,9 @@ function Edit-Post{
 				continue
 			}
 			$modified_postname=Modify-Postname($postname)
+			if($modified_postname -eq ""){
+				continue
+			}
 			Publish-Post($modified_postname)
 
 		}elseif($ans_edit_choice -eq "3"){
@@ -431,10 +449,11 @@ function Update-Copys{
 				cp "$pub_image_path$pub_postname`\$($_.Name)" "$draft_image_path$pub_postname`\$($_.Name)"
 			}
 
+
 		}
 
 	}
-
+	Write-Host "Copys are now updated.`n"
 }
 
 
@@ -445,7 +464,7 @@ function Check-Categories{
 	Write-Host "`n"
 	ls "$copy_path" | ForEach {
 		$cflag=0
-		cat "$copy_path$_" | Select -first 15  | ForEach{
+		cat "$copy_path$_" -Encoding utf8| Select -first 15  | ForEach{
 			if($_ -match "categories:"){
 				$cflag=1
 			}
@@ -516,7 +535,36 @@ function Add-ImageMaterial{
 
 
 
+function Remove-Draft{
+	$postname=Choose-Post($draft_path)
+	if($postname -eq ""){
+		return
+	}
 
+	if(!(Test-Path $garbege_path)){
+		mkdir $garbege_path
+	}
+
+	$idx=1
+	$tmp=$postname
+	while($true){
+		if(Test-Path "$garbege_path$tmp.md"){
+			$tmp="$postname($idx)"
+		}else{
+			break
+		}
+		$idx+=1
+	}
+	$postname=$tmp
+	try{
+		mv "$draft_path$postname.md" "$garbege_path$postname.md"
+		mv "$draft_image_path$postname" "$garbege_path$postname"
+	}catch{
+		Write-Host "Fatal: Fail to remove draft $postname"
+		return
+	}
+	Write-Host "Suceeded to remove $postname from drafts.`nIt's now in garbeges directory."
+}
 
 
 
@@ -553,10 +601,11 @@ while($true){
 	Write-Host "(7) Update Copys"
 	Write-Host "(8) Check Published Categories"
 	Write-Host "(9) Add Material to A Draft Image Pool"
-	Write-Host "(10) Exit"
+	Write-Host "(10) Remove A Draft"
+	Write-Host "(11) Exit"
 
 	$ans_main_menu = Read-Host "`nPlease choose the operation you want to excute"
-	if($ans_main_menu -eq 10){
+	if($ans_main_menu -eq 11){
 		exit
 	}elseif($ans_main_menu -eq 1){
 		Get-StatusList
@@ -580,5 +629,7 @@ while($true){
 		Check-Categories
 	}elseif($ans_main_menu -eq 9){
 		Add-ImageMaterial
+	}elseif($ans_main_menu -eq 10){
+		Remove-Draft
 	}
 }
