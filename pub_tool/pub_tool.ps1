@@ -470,7 +470,8 @@ function Check-Categories{
 			}
 			if(($cflag -eq 1) -and ($_ -match "-[\sA-Za-z0-9]")){
 				$ctg= $($_ -replace "-","").trimstart().trimend()
-				if(!($cat_list.Contains($cat))){
+				#Write-Host "$($cat_list.Contains($ctg))"
+				if(!($($cat_list.Contains($ctg)))){
 					$cat_list.Add($ctg) | out-null
 					Write-Host "($idx) $ctg"
 					$idx+=1
