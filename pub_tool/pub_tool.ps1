@@ -214,7 +214,13 @@ function Operate_Changing_Postname{
 function Modify-Postname{
 	param($origin_postname)
 
-	$year, $month, $date, $title=$origin_postname.split("-")
+	$year, $month, $date, $title_seg_list=$origin_postname.split("-")
+	$title=""
+	ForEach($seg in $title_seg_list){
+		$seg+="-"
+		$title+=$seg
+	}
+	$title=$title.trimend("-")
 	$origin_title=$title
 	while($true){
 		$ans_yn_edit_time=Read-Host "Do you want to modify the time stamp of $origin_postname ?(y/n)"
@@ -248,8 +254,9 @@ function Modify-Postname{
 		if($_ -eq "---"){
 			$dash_found+=1
 		}
-		if(($_ -match "title:") -and ($dash_found -eq 1)){
-			$_=$_ -replace "$origin_title", "$title"
+		if($($_ -match "title:") -and $($dash_found -eq 1)){
+			$_=$($_ -replace "$origin_title", "$title")
+			#Write-Host "$origin_title,$_,$title"
 		}
 		$txt+=$_+"`n"
 		#Write-Host $_
